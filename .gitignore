@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# Regenerable intermediate: 22 MB of per-channel signals.
+# Recreate with: python3 nes_apu.py
+_stages.npy
