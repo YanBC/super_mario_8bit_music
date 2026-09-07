@@ -1,0 +1,972 @@
+<title>The 2A03 Signal Path — local</title>
+<style>
+:root{
+  --board:#0d1512;      /* PCB substrate */
+  --panel:#16221c;      /* raised instrument face */
+  --panel-2:#1d2b24;
+  --edge:#2c3f35;       /* hairline */
+  --copper:#c98a4b;     /* structure, rules, eyebrows */
+  --copper-dim:#8a6237;
+  --silk:#e6ece7;       /* silkscreen text */
+  --silk-dim:#9aa89f;
+  --phosphor:#4fd6c8;   /* LIVE SIGNAL ONLY */
+  --amber:#e8a33d;
+  --burnt:#cf7a52;
+  --slate:#8fa0b8;
+  --scope-bg:#0a100e;
+  --measure:66ch;
+  font-synthesis-weight:none;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--board);
+  color:var(--silk);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16.5px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px 96px}
+.col{max-width:var(--measure)}
+
+/* ---------- type ---------- */
+h1,h2,h3,.eyebrow,.plate{font-family:"Chakra Petch","Chakra Petch Fallback",sans-serif}
+h1{
+  font-size:clamp(2.4rem,6.2vw,4.1rem);
+  line-height:1.02;font-weight:700;letter-spacing:-.015em;
+  margin:0 0 .55em;text-wrap:balance;
+}
+h2{font-size:1.65rem;font-weight:600;letter-spacing:-.005em;margin:0 0 .2em;text-wrap:balance}
+h3{font-size:1.02rem;font-weight:600;margin:0 0 .35em;letter-spacing:.01em}
+p{margin:0 0 1.05em}
+a{color:var(--phosphor)}
+strong{font-weight:600;color:#fff}
+.lede{font-size:1.18rem;line-height:1.55;color:#cfd8d1}
+.eyebrow{
+  font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--copper);margin:0 0 1.4em;
+}
+.note{font-size:.9rem;color:var(--silk-dim);line-height:1.6}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.9em}
+code{color:var(--amber);background:rgba(232,163,61,.09);padding:.08em .34em;border-radius:2px}
+
+/* ---------- hero ---------- */
+header{padding:72px 0 20px}
+.rule{height:1px;background:linear-gradient(90deg,var(--copper),rgba(201,138,75,0));margin:0 0 26px}
+.chip-id{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.13em;
+  color:var(--copper-dim);text-transform:uppercase;
+}
+
+/* ---------- section framing ---------- */
+section{padding-top:78px}
+.sec-head{display:flex;gap:20px;align-items:baseline;margin-bottom:1.1em}
+.sec-num{
+  font-family:"IBM Plex Mono",monospace;font-size:.82rem;font-weight:500;
+  color:var(--copper);flex:0 0 auto;padding-top:.3em;letter-spacing:.05em;
+}
+.sec-head > div{min-width:0}
+.sec-sub{color:var(--silk-dim);font-size:.93rem;margin:0}
+
+/* ---------- instrument panel ---------- */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--edge);
+  border-top:1px solid #3d5749;
+  border-radius:3px;
+  margin:26px 0;
+  overflow:hidden;
+}
+.plate{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:11px 16px;
+  background:var(--panel-2);
+  border-bottom:1px solid var(--edge);
+  font-size:.72rem;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--silk-dim);font-weight:600;
+}
+.plate .spacer{flex:1}
+.plate .val{color:var(--phosphor);font-family:"IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:none;font-size:.78rem}
+.panel-body{padding:16px}
+
+/* ---------- scope ---------- */
+.scope{
+  position:relative;background:var(--scope-bg);border:1px solid var(--edge);border-radius:2px;
+}
+.scope canvas{display:block;width:100%;height:100%}
+.scope-tag{
+  position:absolute;top:8px;left:10px;font-family:"IBM Plex Mono",monospace;
+  font-size:.68rem;letter-spacing:.1em;color:var(--copper-dim);pointer-events:none;
+}
+
+/* ---------- controls ---------- */
+button{font-family:inherit;font-size:inherit}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--panel-2);color:var(--silk);
+  border:1px solid var(--edge);border-radius:2px;
+  padding:9px 17px;cursor:pointer;
+  font-family:"Chakra Petch",sans-serif;font-weight:600;
+  font-size:.82rem;letter-spacing:.09em;text-transform:uppercase;
+  transition:border-color .14s,color .14s,background .14s;
+}
+.btn:hover{border-color:var(--copper);color:#fff}
+.btn:focus-visible{outline:2px solid var(--phosphor);outline-offset:2px}
+.btn[aria-pressed="true"],.btn.on{border-color:var(--phosphor);color:var(--phosphor);background:rgba(79,214,200,.07)}
+.btn .dot{width:7px;height:7px;border-radius:50%;background:var(--copper-dim);flex:0 0 auto}
+.btn.on .dot,.btn[aria-pressed="true"] .dot{background:var(--phosphor);box-shadow:0 0 7px var(--phosphor)}
+.btn-lg{padding:13px 26px;font-size:.92rem}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+.slider-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
+.slider-row label{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--silk-dim);font-weight:600}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;background:transparent;width:190px;height:22px;cursor:pointer;
+}
+input[type=range]:focus-visible{outline:2px solid var(--phosphor);outline-offset:4px}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--edge)}
+input[type=range]::-moz-range-track{height:2px;background:var(--edge)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--copper);margin-top:-5.5px;border:none;
+}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--copper);border:none}
+
+/* ---------- channel grid ---------- */
+.voices{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px;margin:26px 0}
+.voice{
+  background:var(--panel);border:1px solid var(--edge);border-radius:3px;
+  padding:14px;display:flex;flex-direction:column;gap:11px;
+}
+.voice .vtag{
+  font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;
+  text-transform:uppercase;display:flex;align-items:center;gap:7px;
+}
+.swatch{width:9px;height:9px;flex:0 0 auto}
+.voice h3{margin:0;font-size:1.06rem}
+.voice p{margin:0;font-size:.86rem;line-height:1.55;color:var(--silk-dim);flex:1}
+.voice .spec{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--copper-dim);
+  border-top:1px solid var(--edge);padding-top:9px;line-height:1.7;
+}
+
+/* ---------- register table ---------- */
+.tablewrap{overflow-x:auto;margin:24px 0;border:1px solid var(--edge);border-radius:3px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Mono",monospace;font-size:.82rem}
+th{
+  text-align:left;padding:10px 14px;background:var(--panel-2);
+  font-family:"Chakra Petch",sans-serif;font-size:.68rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--silk-dim);font-weight:600;
+  border-bottom:1px solid var(--edge);white-space:nowrap;
+}
+td{padding:8px 14px;border-bottom:1px solid rgba(44,63,53,.5);white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:rgba(79,214,200,.05)}
+tbody tr:hover td:first-child{color:var(--phosphor)}
+.err{color:var(--burnt)}
+.hex{color:var(--amber)}
+caption{caption-side:bottom;padding:11px 14px;font-family:"IBM Plex Sans",sans-serif;
+  font-size:.82rem;color:var(--silk-dim);text-align:left;line-height:1.5}
+
+/* ---------- payoff figures ---------- */
+.ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--edge);
+  border:1px solid var(--edge);border-radius:3px;margin:26px 0}
+.ledger div{background:var(--panel);padding:18px 16px}
+.ledger .k{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--silk-dim);
+  font-family:"Chakra Petch",sans-serif;font-weight:600;margin-bottom:7px}
+.ledger .v{font-family:"IBM Plex Mono",monospace;font-size:1.5rem;color:var(--phosphor);
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.ledger .u{font-size:.78rem;color:var(--silk-dim);margin-top:5px;font-family:"IBM Plex Sans",sans-serif}
+
+footer{margin-top:88px;padding-top:26px;border-top:1px solid var(--edge);color:var(--silk-dim);font-size:.86rem}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:620px){
+  .wrap{padding:0 18px 72px}
+  .sec-head{gap:13px}
+  header{padding-top:48px}
+}
+</style>
+<style>
+/* ---------- local additions ---------- */
+.statusbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;
+  padding:9px 28px;background:rgba(13,21,18,.93);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--edge);font-size:.8rem;color:var(--silk-dim);
+}
+.statusbar .spacer{flex:1}
+.led{width:9px;height:9px;border-radius:50%;background:var(--copper-dim);flex:none;
+     box-shadow:0 0 0 0 rgba(79,214,200,.6);transition:background .18s}
+.led.on{background:var(--phosphor);animation:pulse 1.6s ease-out infinite}
+.led.err{background:#e2564d}
+.led.busy{background:var(--amber)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(79,214,200,.55)}
+                 100%{box-shadow:0 0 0 9px rgba(79,214,200,0)}}
+#nowplaying{color:var(--silk);max-width:46ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-sm{padding:3px 11px;font-size:.72rem}
+.levelrow{display:flex;flex-direction:column;gap:6px;margin:0 0 18px;max-width:var(--measure)}
+.check{display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+       font-size:.88rem;color:var(--silk);user-select:none}
+.check input{accent-color:var(--phosphor);width:15px;height:15px;cursor:pointer}
+.err-banner{margin:16px 0;padding:12px 15px;border:1px solid #e2564d;
+            border-left-width:3px;background:rgba(226,86,77,.09);
+            color:#ffb3ad;font-size:.87rem;border-radius:2px}
+.err-banner code{color:#ffd9d6;background:rgba(226,86,77,.15)}
+button[disabled]{opacity:.45;cursor:progress}
+</style>
+<div class="statusbar" id="statusbar">
+  <span class="led" id="led"></span>
+  <span class="mono" id="engine">audio engine: idle</span>
+  <span class="spacer"></span>
+  <span class="mono" id="nowplaying">—</span>
+  <button class="btn btn-sm" id="stopall">Stop</button>
+</div>
+<div class="wrap">
+
+<header>
+  <div class="chip-id">Ricoh RP2A03 &nbsp;·&nbsp; 5-channel APU &nbsp;·&nbsp; NTSC 1.789773 MHz &nbsp;·&nbsp; 1983</div>
+  <div class="rule" style="margin-top:14px"></div>
+  <h1>Nobody ever recorded this music.</h1>
+  <div class="col">
+    <p class="lede">There is no audio file inside a Super Mario Bros. cartridge. There is a
+    program that writes eleven bytes into a sound chip, sixty times a second, and the chip
+    builds the waveform out of nothing but integers and a clock divider.</p>
+    <p>Below is that whole chain, working. The tune is an original written in the same idiom —
+    same chip, same limits, same four voices — so you can take it apart without taking apart
+    somebody's copyright. Press play, then follow the signal down to the speaker cone.</p>
+  </div>
+
+  <div class="panel">
+    <div class="plate">
+      <span>Mixed output</span>
+      <span class="spacer"></span>
+      <span class="val" id="hero-status">idle</span>
+    </div>
+    <div class="panel-body">
+      <div class="scope" style="height:190px">
+        <canvas id="hero-scope"></canvas>
+        <div class="scope-tag">CH.MIX &nbsp; 5 ms/div</div>
+      </div>
+      <div class="controls" style="margin-top:14px">
+        <button class="btn btn-lg" id="hero-play"><span class="dot"></span><span>Play the tune</span></button>
+        <span class="note mono" id="hero-meta"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">01</div>
+    <div>
+      <h2>A note is an integer, and it is slightly wrong</h2>
+      <p class="sec-sub">Music data → APU registers</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>The chip cannot be told "play A above middle C." It has one clock running at
+    <strong>1,789,773 Hz</strong> and an 11-bit counter. You give it a divider, it gives you a pitch:</p>
+    <p class="mono" style="color:var(--phosphor);font-size:1.02rem;margin:1.4em 0">
+      f&nbsp;=&nbsp;1789773&nbsp;/&nbsp;(&nbsp;16&nbsp;×&nbsp;(&nbsp;t&nbsp;+&nbsp;1&nbsp;)&nbsp;)
+    </p>
+    <p>Since <code>t</code> must be a whole number, most notes are unreachable. The composer gets the
+    nearest available one. Look at the error column: in the bass the grid is fine enough to be
+    invisible, but the higher you go the coarser it gets, because the same integer step covers more
+    and more Hz. That drift is part of the sound you remember.</p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>Note</th><th>Wanted</th><th>Timer t</th><th>Written to $4002/$4003</th><th>Actually plays</th><th>Error</th>
+      </tr></thead>
+      <tbody id="regtable"></tbody>
+      <caption>Click any row to hear that exact register value. Values are computed live from the
+        formula above — this is what the music driver pokes into the chip.</caption>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">02</div>
+    <div>
+      <h2>Four voices, and you may not have a fifth</h2>
+      <p class="sec-sub">Registers → digital waveform</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>Every NES soundtrack ever written is these channels. Not "up to" these channels —
+    exactly these, always, with fixed jobs. Melody and harmony fight over two pulse
+    channels, the bass gets the triangle whether it suits the song or not, and all
+    percussion is one noise generator.</p>
+  </div>
+
+  <div class="levelrow">
+  <label class="check"><input type="checkbox" id="levelmatch" checked>
+    <span>Match levels across solos</span></label>
+  <span class="note">On: every solo is scaled by the <em>full mix</em>'s peak, so
+  you hear the real balance — the triangle is genuinely the loudest channel.
+  Off: each solo is normalised to itself, like the shipped WAVs.</span>
+</div>
+<div class="voices" id="voices"></div>
+
+  <div class="panel">
+    <div class="plate">
+      <span>Pulse channel 1 — duty select</span>
+      <span class="spacer"></span>
+      <span class="val" id="duty-val">50% · fat</span>
+    </div>
+    <div class="panel-body">
+      <div class="scope" style="height:150px">
+        <canvas id="duty-scope"></canvas>
+        <div class="scope-tag">CH.1 &nbsp; 1 ms/div</div>
+      </div>
+      <div class="slider-row">
+        <label for="duty">Duty</label>
+        <input type="range" id="duty" min="0" max="3" step="1" value="2">
+        <button class="btn" id="duty-play"><span class="dot"></span><span>Audition</span></button>
+      </div>
+      <p class="note" style="margin:14px 0 0;max-width:60ch">Two bits. Four settings, and 75% sounds
+      identical to 25% — so in practice, three tone colours for the entire console. Everything you
+      think of as an NES "instrument" is one of these three, plus a volume envelope.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3 style="margin-top:34px">The trick composers used to cheat</h3>
+    <p>A pulse channel plays one note. It cannot play a chord. So drivers flip the pitch register
+    every single frame — C, E, G, C, E, G, sixty times a second — fast enough that your ear fuses
+    it into a chord instead of hearing three separate notes. It buzzes, and that buzz became a
+    genre signature.</p>
+  </div>
+  <div class="controls" style="margin:20px 0 0">
+    <button class="btn" id="arp-off"><span class="dot"></span><span>One note held</span></button>
+    <button class="btn" id="arp-on"><span class="dot"></span><span>Same channel, arpeggiated</span></button>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">03</div>
+    <div>
+      <h2>The mixer is four resistors, so it lies</h2>
+      <p class="sec-sub">Waveform → voltage</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>Each channel produces a number from 0 to 15 — <strong>four bits</strong>, not eight. Those
+    numbers do not get added. They drive a resistor ladder into a single output pin, and a resistor
+    ladder is not linear: the louder things get, the more the chip compresses them on its own.</p>
+    <p>Nobody designed that as an effect. It is a consequence of cheap 1983 analogue parts, and it
+    is a real part of why the console sounds glued together rather than like four things playing
+    at once.</p>
+  </div>
+
+  <div class="panel">
+    <div class="plate"><span>Pulse DAC transfer curve</span><span class="spacer"></span>
+      <span class="val">95.88 / (8128/n + 100)</span></div>
+    <div class="panel-body">
+      <div class="scope" style="height:250px">
+        <canvas id="dac-scope"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">04</div>
+    <div>
+      <h2>The speaker cannot draw a corner</h2>
+      <p class="sec-sub">Voltage → moving air</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>The chip hands the amplifier a waveform with perfectly vertical edges. The speaker cannot
+    reproduce it, and that is not a defect — it is mass. A cone is a weight on a spring pushed by
+    a coil, so its motion obeys</p>
+    <p class="mono" style="color:var(--phosphor);font-size:1rem;margin:1.4em 0">
+      m·x″ &nbsp;+&nbsp; c·x′ &nbsp;+&nbsp; k·x &nbsp;=&nbsp; B·l·i(t)
+    </p>
+    <p>which is a low-pass filter wearing physics notation. Feed it a square wave and it overshoots,
+    rings at its own resonance, and rounds every edge. Two consequences follow. A tiny speaker
+    resonates high — around 650 Hz here — so <strong>it physically cannot move far enough to make
+    bass</strong>, which is why the triangle channel's bassline nearly vanishes on a small speaker
+    and returns on headphones. And the sharpness you hear in a square wave is its harmonics: the
+    corner is where they live, so as the cone rounds the corner it is also softening the tone.</p>
+  </div>
+
+  <div class="panel">
+    <div class="plate">
+      <span>Coil drive vs. cone displacement</span>
+      <span class="spacer"></span>
+      <span class="val" id="spk-val">f₀ 650 Hz · Q 1.1</span>
+    </div>
+    <div class="panel-body">
+      <div class="scope" style="height:210px">
+        <canvas id="spk-scope"></canvas>
+        <div class="scope-tag">amber = where the cone actually is</div>
+      </div>
+      <div class="slider-row">
+        <label for="f0">Cone resonance</label>
+        <input type="range" id="f0" min="120" max="1600" step="10" value="650">
+        <button class="btn" id="spk-play"><span class="dot"></span><span>Through the cone</span></button>
+        <button class="btn" id="spk-bypass"><span class="dot"></span><span>Bypassed</span></button>
+      </div>
+      <p class="note" style="margin:14px 0 0;max-width:60ch">Drag toward 1600 Hz for a phone
+      earpiece and the low end evaporates. Drag toward 120 Hz for a large cabinet and the wave
+      arrives almost intact.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">05</div>
+    <div>
+      <h2>So what does "8-bit" actually mean?</h2>
+      <p class="sec-sub">The part that was genuinely clever</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>Not the audio. The audio is 4-bit, and it isn't sampled at all. "8-bit" describes the
+    <strong>CPU</strong> — the console's era, not its sound depth. The name stuck to the music
+    because the music is inseparable from the machine that computes it.</p>
+    <p>Here is the actual advance, in the only unit that mattered in 1985. A cartridge had
+    tens of kilobytes of ROM for <em>everything</em> — levels, sprites, code. Storing recorded
+    audio was not slightly too expensive; it was off by three orders of magnitude:</p>
+  </div>
+
+  <div class="ledger" id="ledger"></div>
+
+  <div class="col">
+    <p>So the music had to be an <em>algorithm</em>, and the composer's job became writing for a
+    synthesiser he could not modify, with three timbres and no chords. Koji Kondo's melodies are
+    memorable partly because they had to survive being played on a square wave with a hole in the
+    middle of the arrangement — everything decorative was unaffordable, so only the hook was left.</p>
+    <p>That is the gist. The constraint did the composing as much as the composer did.</p>
+  </div>
+
+  <footer>
+    <p style="margin:0 0 .8em">Every sound on this page was rendered by
+    <code>nes_apu.py</code> — the same emulator that writes the WAVs and the figures —
+    and sent here as a finished WAV. The browser does no synthesis; it draws, and it
+    plays. Original composition; no Nintendo material reproduced.</p>
+    <p style="margin:0" class="note">Served locally by <code>serve.py</code>.
+    Reload after editing the score in <code>nes_apu.py</code> and the page follows.</p>
+  </footer>
+</section>
+</div>
+
+
+<script>
+"use strict";
+/* ===========================================================================
+   The browser does no synthesis. Every sound here is a WAV rendered by
+   nes_apu.py and fetched from the local server; all this file does is decode,
+   play, and draw. That is why the audio is reliable -- decoding a finished
+   buffer is the one WebAudio path with no scheduling subtleties in it.
+   =========================================================================== */
+
+const $  = id => document.getElementById(id);
+const led = $("led"), engineTxt = $("engine"), nowTxt = $("nowplaying");
+
+/* ---------------------------------------------------------------- errors -- */
+function banner(msg, where){
+  const host = where || document.querySelector("header .col");
+  let el = host.querySelector(".err-banner");
+  if(!el){ el = document.createElement("div"); el.className = "err-banner"; host.appendChild(el); }
+  el.innerHTML = msg;
+  led.className = "led err";
+}
+function clearBanner(){ document.querySelectorAll(".err-banner").forEach(e => e.remove()); }
+
+/* ---------------------------------------------------------------- engine -- */
+const Engine = {
+  ctx: null,
+  buffers: new Map(),      /* url -> AudioBuffer */
+  inflight: new Map(),     /* url -> Promise      */
+  src: null,
+  playing: null,           /* {url, label, buffer, startedAt} */
+
+  /* Created suspended at load so we can decode and draw before any gesture.
+     Nothing is audible until resume(), which only ever runs inside a click. */
+  init(){
+    if(this.ctx) return this.ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC){ banner("This browser has no Web Audio API, so nothing can play."); return null; }
+    this.ctx = new AC();
+    this.ctx.onstatechange = () => this.paint();
+    this.paint();
+    return this.ctx;
+  },
+
+  paint(){
+    const st = this.ctx ? this.ctx.state : "idle";
+    if(this.playing){
+      led.className = "led on";
+      engineTxt.textContent = "audio engine: running · " + this.ctx.sampleRate + " Hz";
+      nowTxt.textContent = this.playing.label;
+    } else {
+      if(led.className.indexOf("err") < 0) led.className = "led";
+      engineTxt.textContent = "audio engine: " + st;
+      nowTxt.textContent = "—";
+    }
+    if(this.onchange) this.onchange();
+  },
+
+  /* Chrome/Safari start the context suspended, and Safari can drop it back to
+     "interrupted" after a phone call or a screen lock. Both need an awaited
+     resume before start() -- firing start() on a suspended context is exactly
+     the "sometimes I hear nothing" failure. */
+  async wake(){
+    const c = this.init();
+    if(!c) throw new Error("no AudioContext");
+    if(c.state !== "running"){
+      try { await c.resume(); } catch(e){ /* fall through to the check below */ }
+    }
+    if(c.state !== "running"){
+      throw new Error("The browser is holding audio suspended (state: " + c.state +
+                      "). Click anywhere on the page and try again.");
+    }
+    return c;
+  },
+
+  async load(url){
+    if(this.buffers.has(url)) return this.buffers.get(url);
+    if(this.inflight.has(url)) return this.inflight.get(url);
+    const c = this.init();
+    const p = (async () => {
+      const r = await fetch(url);
+      if(!r.ok){
+        let detail = r.status + " " + r.statusText;
+        try { const j = await r.json(); if(j.error) detail = j.error; } catch(e){}
+        throw new Error("server could not render that: " + detail);
+      }
+      const bytes = await r.arrayBuffer();
+      const buf = await c.decodeAudioData(bytes);
+      this.buffers.set(url, buf);
+      this.inflight.delete(url);
+      return buf;
+    })();
+    this.inflight.set(url, p);
+    p.catch(() => this.inflight.delete(url));
+    return p;
+  },
+
+  stop(){
+    if(this.src){
+      this.src.onended = null;
+      try { this.src.stop(); } catch(e){}
+      this.src = null;
+    }
+    this.playing = null;
+    this.paint();
+  },
+
+  async play(url, label, owner, onEnd){
+    this.stop();
+    led.className = "led busy";
+    engineTxt.textContent = "audio engine: rendering…";
+    let buf;
+    try {
+      const c = await this.wake();
+      buf = await this.load(url);
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const g = c.createGain();
+      g.gain.value = 0.75;
+      src.connect(g).connect(c.destination);
+      src.onended = () => {
+        if(this.src === src){ this.src = null; this.playing = null; this.paint();
+                              if(onEnd) onEnd(); }
+      };
+      src.start();
+      this.src = src;
+      this.playing = {url, label, owner: owner || null, buffer: buf, startedAt: c.currentTime};
+      clearBanner();
+      this.paint();
+    } catch(err){
+      this.playing = null;
+      this.paint();
+      banner("<strong>Could not play.</strong> " + err.message +
+             "<br><span class='note'>Is <code>serve.py</code> still running in the terminal?</span>");
+      if(onEnd) onEnd();
+      throw err;
+    }
+    return buf;
+  },
+
+  /* seconds into the currently playing buffer, or null */
+  position(){
+    if(!this.playing) return null;
+    return this.ctx.currentTime - this.playing.startedAt;
+  }
+};
+Engine.init();
+
+$("stopall").addEventListener("click", () => Engine.stop());
+/* Safari suspends on tab-hide; re-paint so the readout never lies. */
+document.addEventListener("visibilitychange", () => Engine.paint());
+
+/* Every play button is registered here, and its lit/unlit state is *derived*
+   from what the engine is actually playing rather than set by hand. Setting it
+   by hand is how you end up with a button lit over silence. */
+const wired = [];
+function wire(btn, labelFn, urlFn){
+  wired.push({btn});
+  btn.addEventListener("click", async () => {
+    if(Engine.playing && Engine.playing.owner === btn){ Engine.stop(); return; }
+    btn.disabled = true;
+    try { await Engine.play(urlFn(), labelFn(), btn); } catch(e){ /* banner shown */ }
+    finally { btn.disabled = false; }
+  });
+}
+function syncButtons(){
+  const owner = Engine.playing ? Engine.playing.owner : null;
+  wired.forEach(({btn}) => btn.classList.toggle("on", btn === owner));
+  if(typeof heroBtn !== "undefined" && heroBtn){
+    const on = heroBtn.classList.contains("on");
+    heroBtn.querySelector("span:last-child").textContent = on ? "Stop" : "Play the tune";
+    heroStatus.textContent = on ? "running · 4 channels · 60 fps driver" : "idle";
+  }
+}
+Engine.onchange = syncButtons;
+
+/* ---------------------------------------------------------------- canvas -- */
+const CSS = getComputedStyle(document.documentElement);
+const col = n => CSS.getPropertyValue(n).trim();
+
+function surface(cv){
+  const dpr = window.devicePixelRatio || 1;
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.max(1, Math.round(r.width * dpr));
+  cv.height = Math.max(1, Math.round(r.height * dpr));
+  const g = cv.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, r.width, r.height);
+  return {g, w: r.width, h: r.height};
+}
+function grid(g, w, h, cols){
+  g.strokeStyle = "rgba(44,63,53,.75)";
+  g.lineWidth = 1;
+  for(let i = 1; i < cols; i++){
+    const x = Math.round(w * i / cols) + .5;
+    g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke();
+  }
+  for(let i = 1; i < 4; i++){
+    const y = Math.round(h * i / 4) + .5;
+    g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke();
+  }
+  g.strokeStyle = "rgba(44,63,53,1)";
+  const mid = Math.round(h / 2) + .5;
+  g.beginPath(); g.moveTo(0, mid); g.lineTo(w, mid); g.stroke();
+}
+function trace(g, data, w, h, colour, lw){
+  g.strokeStyle = colour; g.lineWidth = lw || 1.6;
+  g.lineJoin = "round"; g.beginPath();
+  const n = data.length;
+  for(let i = 0; i < n; i++){
+    const x = i / (n - 1) * w;
+    const y = h / 2 - data[i] * h * 0.44;
+    i ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.stroke();
+}
+function hint(g, w, h, text){
+  g.fillStyle = col("--silk-dim"); g.font = "12px 'IBM Plex Mono', monospace";
+  g.textAlign = "center"; g.fillText(text, w / 2, h / 2 - 8); g.textAlign = "left";
+}
+
+/* ------------------------------------------------------------------ data -- */
+async function getJSON(url){
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(url + " -> " + r.status);
+  return r.json();
+}
+
+let META = null;
+
+/* ================================ hero ==================================== */
+const heroCv = $("hero-scope"), heroBtn = $("hero-play"),
+      heroStatus = $("hero-status"), heroTag = document.querySelector("#hero-scope + .scope-tag");
+let heroEnvelope = null;
+
+function drawHero(){
+  const {g, w, h} = surface(heroCv);
+  grid(g, w, h, 10);
+  const pos = Engine.position();
+  const p = Engine.playing;
+
+  if(p && pos !== null && p.url.indexOf("/api/song") === 0){
+    /* live window, 5 ms per division across 10 divisions */
+    const d = p.buffer.getChannelData(0);
+    const span = Math.round(p.buffer.sampleRate * 0.05);
+    let start = Math.round(pos * p.buffer.sampleRate) - (span >> 1);
+    start = Math.max(0, Math.min(d.length - span - 1, start));
+    const pts = new Float32Array(600);
+    for(let i = 0; i < 600; i++) pts[i] = d[start + Math.round(i / 599 * (span - 1))] || 0;
+    trace(g, pts, w, h, col("--phosphor"), 1.7);
+    if(heroTag) heroTag.textContent = "CH.MIX   5 ms/div   t=" + pos.toFixed(1) + "s";
+  } else if(heroEnvelope){
+    /* idle: peak envelope of the whole tune, so you can see the eight bars */
+    const e = heroEnvelope;
+    g.fillStyle = "rgba(79,214,200,.22)";
+    g.beginPath();
+    for(let i = 0; i < e.length; i++) g.lineTo(i / (e.length - 1) * w, h / 2 - e[i] * h * 0.44);
+    for(let i = e.length - 1; i >= 0; i--) g.lineTo(i / (e.length - 1) * w, h / 2 + e[i] * h * 0.44);
+    g.closePath(); g.fill();
+    if(heroTag) heroTag.textContent = "CH.MIX   whole tune   " + META.seconds.toFixed(1) + "s";
+  } else {
+    hint(g, w, h, "press play");
+  }
+}
+
+function songURL(voices, opts){
+  opts = opts || {};
+  const q = new URLSearchParams({voices: voices.join(",")});
+  if(opts.speaker){ q.set("speaker", "1"); q.set("f0", String(opts.f0)); }
+  if(opts.level)  q.set("level", opts.level);
+  return "/api/song?" + q.toString();
+}
+
+wire(heroBtn, () => "full mix · 4 channels · 60 Hz driver",
+     () => songURL(["p1", "p2", "tri", "noise"]));
+
+/* Fetch and decode the mix up front so the idle scope has something real in it
+   and the first press of Play is instant. Decoding needs no user gesture. */
+async function primeHero(){
+  try {
+    const buf = await Engine.load(songURL(["p1", "p2", "tri", "noise"]));
+    const d = buf.getChannelData(0), N = 900, step = Math.floor(d.length / N);
+    heroEnvelope = new Float32Array(N);
+    for(let i = 0; i < N; i++){
+      let m = 0;
+      for(let j = i * step; j < (i + 1) * step; j++) if(Math.abs(d[j]) > m) m = Math.abs(d[j]);
+      heroEnvelope[i] = m;
+    }
+    drawHero();
+  } catch(e){ /* the banner from Engine.load already explains it */ }
+}
+
+/* one animation loop drives every live scope */
+function frame(){
+  if(Engine.playing) { drawHero(); drawSpk(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ============================ 01 register table =========================== */
+function buildRegisters(){
+  $("regtable").innerHTML = META.registers.map(r => {
+    const hex = v => v.toString(16).padStart(2, "0");
+    return `<tr data-hz="${r.got}" title="click to hear timer ${r.timer}">`
+         + `<td>${r.note}</td><td>${r.want.toFixed(2)} Hz</td><td>${r.timer}</td>`
+         + `<td class="hex">$${hex(r.lo)} &nbsp;/&nbsp; $${hex(r.hi)}</td>`
+         + `<td>${r.got.toFixed(2)} Hz</td>`
+         + `<td class="err">${r.cents >= 0 ? "+" : ""}${r.cents.toFixed(1)} ¢</td></tr>`;
+  }).join("");
+}
+$("regtable").addEventListener("click", e => {
+  const tr = e.target.closest("tr");
+  if(!tr) return;
+  const hz = tr.dataset.hz;
+  Engine.play(`/api/note?hz=${hz}&duty=2&secs=0.45`,
+              `${tr.cells[0].textContent} · timer ${tr.cells[2].textContent}`).catch(()=>{});
+});
+
+/* ================================ 02 voices =============================== */
+const VOICES = [
+  {k:"p1", tag:"CH.1", col:"--amber", name:"Pulse 1", role:"Melody",
+   text:"A square wave with a selectable pulse width. Two values only — off, or its 4-bit volume. This is the voice you hum.",
+   spec:"11-bit timer · 4-bit volume · 2-bit duty"},
+  {k:"p2", tag:"CH.2", col:"--burnt", name:"Pulse 2", role:"Harmony",
+   text:"Identical hardware to Pulse 1. Usually a third below the melody, or an arpeggio filling the gaps between phrases.",
+   spec:"11-bit timer · 4-bit volume · 2-bit duty"},
+  {k:"tri", tag:"CH.3", col:"--phosphor", name:"Triangle", role:"Bass",
+   text:"A 16-step staircase, divided by 32 instead of 16 so it reaches an octave lower. It has no volume register at all: on, or off.",
+   spec:"11-bit timer · fixed level · 32 steps"},
+  {k:"noise", tag:"CH.4", col:"--slate", name:"Noise", role:"Percussion",
+   text:"A 15-bit shift register clocked fast. Every drum in the kit is this one generator at a different divider and envelope.",
+   spec:"16 dividers · 4-bit volume · LFSR"}
+];
+$("voices").innerHTML = VOICES.map(v => `
+  <div class="voice">
+    <div class="vtag" style="color:var(${v.col})">
+      <span class="swatch" style="background:var(${v.col})"></span>${v.tag} — ${v.role}
+    </div>
+    <h3>${v.name}</h3>
+    <p>${v.text}</p>
+    <div class="spec">${v.spec}</div>
+    <button class="btn" data-solo="${v.k}"><span class="dot"></span><span>Solo</span></button>
+  </div>`).join("");
+
+VOICES.forEach(v => {
+  const b = $("voices").querySelector(`[data-solo="${v.k}"]`);
+  wire(b, () => `${v.tag} solo — ${v.name} (${v.role})`,
+          () => songURL([v.k], {level: $("levelmatch").checked ? "mix" : "self"}));
+});
+/* re-audition under the new levelling if a solo is already playing */
+$("levelmatch").addEventListener("change", () => {
+  const o = Engine.playing && Engine.playing.owner;
+  if(o && o.dataset.solo) o.click(), o.click();
+});
+
+/* ------------------------------- duty ------------------------------------ */
+const DUTY_NAME = ["12.5% · nasal", "25% · classic lead", "50% · fat", "75% (= 25%)"];
+const dutySlider = $("duty"), dutyCv = $("duty-scope");
+let dutyCurve = null;
+
+async function loadDuty(){
+  const d = +dutySlider.value;
+  $("duty-val").textContent = DUTY_NAME[d];
+  try { dutyCurve = (await getJSON("/api/curve/duty?duty=" + d)).y; } catch(e){ dutyCurve = null; }
+  drawDuty();
+}
+function drawDuty(){
+  const {g, w, h} = surface(dutyCv);
+  grid(g, w, h, 8);
+  if(!dutyCurve){ hint(g, w, h, "waiting for serve.py"); return; }
+  /* channel output is 0..15; centre it so the duty asymmetry is visible */
+  const pts = dutyCurve.map(v => (v / 15) * 2 - 1);
+  g.fillStyle = "rgba(232,163,61,.13)";
+  g.beginPath(); g.moveTo(0, h / 2);
+  pts.forEach((v, i) => g.lineTo(i / (pts.length - 1) * w, h / 2 - v * h * 0.4));
+  g.lineTo(w, h / 2); g.closePath(); g.fill();
+  trace(g, pts, w, h, col("--amber"), 1.9);
+}
+dutySlider.addEventListener("input", loadDuty);
+wire($("duty-play"), () => "pulse 1 · duty " + DUTY_NAME[+dutySlider.value],
+     () => `/api/note?hz=523.25&duty=${dutySlider.value}&secs=0.7`);
+
+/* ----------------------------- arpeggio A/B ------------------------------ */
+wire($("arp-off"), () => "one note held — C5, pitch register untouched",
+     () => "/api/note?hz=523.25&duty=2&secs=1.6&arp=0");
+wire($("arp-on"),  () => "same channel, arpeggiated — C/E/G rewritten every frame",
+     () => "/api/note?hz=523.25&duty=2&secs=1.6&arp=1");
+
+/* ================================ 03 DAC ================================== */
+let dac = null;
+function drawDac(){
+  const {g, w, h} = surface($("dac-scope"));
+  const pad = 42, x0 = pad, y0 = h - 30, x1 = w - 16, y1 = 16;
+  g.strokeStyle = "rgba(44,63,53,.8)"; g.lineWidth = 1;
+  for(let i = 0; i <= 6; i++){
+    const x = x0 + (x1 - x0) * i / 6;
+    g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke();
+  }
+  for(let i = 0; i <= 4; i++){
+    const y = y0 + (y1 - y0) * i / 4;
+    g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke();
+  }
+  if(!dac){ hint(g, w, h, "waiting for serve.py"); return; }
+  const mx = Math.max.apply(null, dac.y);
+  const X = i => x0 + (x1 - x0) * (i / (dac.x.length - 1));
+  const Y = v => y0 + (y1 - y0) * (v / mx);
+
+  g.setLineDash([4, 4]); g.strokeStyle = col("--silk-dim"); g.lineWidth = 1.2;
+  g.beginPath(); dac.linear.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
+  g.stroke(); g.setLineDash([]);
+
+  g.strokeStyle = col("--phosphor"); g.lineWidth = 2.2;
+  g.beginPath(); dac.y.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
+  g.stroke();
+  g.fillStyle = col("--phosphor");
+  dac.y.forEach((v, i) => { if(i % 5 === 0){ g.beginPath(); g.arc(X(i), Y(v), 2.6, 0, 7); g.fill(); } });
+
+  g.font = "11px 'IBM Plex Mono', monospace";
+  g.fillStyle = col("--silk-dim");
+  g.fillText("p1 + p2  (0 … 30)", x0, h - 10);
+  g.fillText("straight sum", X(17), Y(dac.linear[21]) - 8);
+  g.fillStyle = col("--phosphor");
+  g.fillText("actual ladder — compresses as it gets loud", X(4), Y(dac.y[13]) - 10);
+  g.save(); g.translate(13, (y0 + y1) / 2); g.rotate(-Math.PI / 2);
+  g.fillStyle = col("--silk-dim"); g.textAlign = "center"; g.fillText("output volts", 0, 0);
+  g.restore();
+  g.fillStyle = col("--amber");
+  g.fillText(`full scale — triangle ${dac.full.tri}  ·  noise ${dac.full.noise}  ·  one pulse ${dac.full.pulse}`,
+             x0, y1 + 4);
+}
+
+/* ============================== 04 speaker ================================ */
+const f0s = $("f0"), spkCv = $("spk-scope");
+let spkCurve = null, spkTimer = null;
+
+async function loadSpk(){
+  const f0 = +f0s.value;
+  $("spk-val").textContent = `f₀ ${f0} Hz · Q 1.1`;
+  try { spkCurve = await getJSON("/api/curve/speaker?f0=" + f0); } catch(e){ spkCurve = null; }
+  drawSpk();
+}
+function drawSpk(){
+  const {g, w, h} = surface(spkCv);
+  grid(g, w, h, 8);
+  if(!spkCurve){ hint(g, w, h, "waiting for serve.py"); return; }
+  const norm = a => { const m = Math.max.apply(null, a.map(Math.abs)) || 1; return a.map(v => v / m); };
+  trace(g, norm(spkCurve.drive), w, h, "rgba(230,236,231,.42)", 1.4);
+  trace(g, norm(spkCurve.cone),  w, h, col("--amber"), 2.2);
+}
+f0s.addEventListener("input", () => {
+  $("spk-val").textContent = `f₀ ${f0s.value} Hz · Q 1.1`;
+  clearTimeout(spkTimer);
+  spkTimer = setTimeout(loadSpk, 110);          /* the cone model is a real loop */
+});
+wire($("spk-play"), () => "full mix through a cone at f₀ " + f0s.value + " Hz",
+     () => songURL(["p1", "p2", "tri", "noise"], {speaker: true, f0: +f0s.value}));
+wire($("spk-bypass"), () => "full mix, no cone — straight from the DAC",
+     () => songURL(["p1", "p2", "tri", "noise"]));
+
+/* =============================== 05 ledger ================================ */
+function buildLedger(){
+  const bytes = META.events * 2;
+  const wav = Math.round(META.seconds * META.sr * 2);
+  const fmt = n => n.toLocaleString("en-US");
+  $("ledger").innerHTML =
+    `<div><div class="k">The tune, as note data</div><div class="v">${fmt(bytes)}</div>
+          <div class="u">bytes · ${META.events} events × 2</div></div>
+     <div><div class="k">The same tune, recorded</div><div class="v">${fmt(wav)}</div>
+          <div class="u">bytes · ${(META.sr/1000).toFixed(1)} kHz 16-bit mono</div></div>
+     <div><div class="k">Ratio</div><div class="v">${fmt(Math.round(wav/bytes))}&nbsp;:&nbsp;1</div>
+          <div class="u">before counting the driver code</div></div>
+     <div><div class="k">Volume resolution</div><div class="v">4</div>
+          <div class="u">bits per channel — not 8</div></div>`;
+}
+
+/* ================================= boot =================================== */
+function redraw(){ drawHero(); drawDuty(); drawDac(); drawSpk(); }
+window.addEventListener("resize", redraw);
+if(document.fonts) document.fonts.ready.then(redraw);
+
+(async function boot(){
+  try {
+    META = await getJSON("/api/meta");
+  } catch(e){
+    banner("<strong>Cannot reach the render server.</strong> Start it with " +
+           "<code>python3 serve.py</code> in the project directory, then reload.");
+    return;
+  }
+  $("hero-meta").textContent =
+    `${META.frames} frames · ${META.seconds.toFixed(1)} s · ${META.events} note events`;
+  buildRegisters();
+  buildLedger();
+  try { dac = await getJSON("/api/curve/dac"); } catch(e){}
+  await loadDuty();
+  await loadSpk();
+  redraw();
+  primeHero();
+})();
+
+</script>

@@ -92,7 +92,9 @@ enough that the ear fuses it. A workaround became a genre signature.
 |---|---|
 | `nes_apu.py` | The emulator. Real timers, real 15-bit LFSR, real non-linear DAC, speaker model. Renders every WAV and dumps `_stages.npy`. |
 | `plot_stages.py` | Reads `_stages.npy`, draws the two figures. |
-| `signal-path.html` | Interactive version of all of the above — a JS port of the emulator. Published as an artifact. |
+| `serve.py` | Local web UI. Serves `ui.html` and renders every sound on demand with the emulator above. |
+| `ui.html` | The page `serve.py` serves. Draws and plays; contains no synthesis. |
+| `signal-path.html` | Standalone interactive version — a JS port of the emulator, no server needed. Published as an artifact. |
 | `mario_style_full.wav` | The full mix, 12.8 s. |
 | `solo_pulse1_lead.wav` | Melody channel alone. |
 | `solo_triangle_bass.wav` | Bass alone — note it never fades, only switches. |
@@ -112,10 +114,29 @@ python3 nes_apu.py      # renders the 5 WAVs, _stages.npy, and the register tabl
 python3 plot_stages.py  # renders the 2 PNGs (needs _stages.npy)
 ```
 
-Open `signal-path.html` in a browser for the interactive version: a live
-oscilloscope, a clickable register table that auditions the exact timer value,
-per-channel solo, a duty-cycle slider, an arpeggio A/B, and a speaker-resonance
-slider.
+For the interactive version, run the local UI:
+
+```sh
+python3 serve.py            # opens http://127.0.0.1:8000
+python3 serve.py --port 9000 --no-open
+```
+
+A live oscilloscope, a clickable register table that auditions the exact timer
+value, per-channel solo, a duty-cycle slider, an arpeggio A/B, and a
+speaker-resonance slider.
+
+**Why a server rather than a single file.** `signal-path.html` ports the whole
+chip to JavaScript and synthesises in the page. That means two emulators to keep
+in agreement, and an audio path that depends on WebAudio scheduling behaving —
+in practice it sometimes came up silent. `serve.py` renders every sound with
+`nes_apu.py` and hands the browser a finished WAV, so there is one emulator and
+the page only has to decode and play. The full mix it serves is byte-identical
+to `mario_style_full.wav`.
+
+Edit the score in `nes_apu.py`, reload the page, and everything follows — the
+register table, the ledger arithmetic and all five renders are computed from it.
+
+`signal-path.html` is still there for the no-server case.
 
 ## Implementation notes
 
